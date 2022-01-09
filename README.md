@@ -25,15 +25,14 @@ components of the Nutils suite, from where it should be imortable as `SI`:
 
 The SI module defines all base units and derived units of the International
 System of Units (SI) are predefined, as well as the full set of metric
-prefixes. Dimensional values are generated primarily by instantiating the
-Quantity type with a string value.
+prefixes. Dimensional values are generated primarily by parsing a string value.
 
     >>> v = SI.parse('7μN*5h/6g')
 
-The Quantity constructor recognizes the multiplication (\*) and division (/)
-operators to separate factors. Every factor can be prefixed with a scale and
-suffixed with a power. The remainder must be either a unit, or else a unit with
-a metric prefix.
+The parser recognizes the multiplication (\*) and division (/) operators to
+separate factors. Every factor can be prefixed with a scale and suffixed with a
+power. The remainder must be either a unit, or else a unit with a metric
+prefix.
 
 In this example, the resulting object is of type "L/T", i.e. length over time,
 which is a subtype of Quantity that stores the powers L=1 and T=-1. Many
@@ -43,9 +42,9 @@ through manipulation.
     >>> type(v) == SI.Velocity == SI.Length / SI.Time
     True
 
-While Quantity can instantiate any subtype, we could have created the same
-object by instantiating Velocity directly, which has the advantage of verifying
-that the specified quantity is indeed of the desired dimension.
+While `parse` can instantiate any subtype of Quantity, we could have created
+the same object by instantiating Velocity directly, which has the advantage of
+verifying that the specified quantity is indeed of the desired dimension.
 
     >>> w = SI.Velocity('8km')
     Traceback (most recent call last):
@@ -56,7 +55,7 @@ Explicit subtypes can also be used in function annotations:
 
     >>> def f(size: SI.Length, load: SI.Force): pass
 
-The Quantity type acts as an opaque container. As long as a quantity has a
+The Quantity types act as an opaque container. As long as a quantity has a
 physical dimension, its value is inaccessible. The value can only be retrieved
 by dividing out a reference quantity, so that the result becomes dimensionless
 and the Quantity wrapper falls away.
@@ -64,8 +63,9 @@ and the Quantity wrapper falls away.
     >>> v / SI.parse('m/s')
     21.0
 
-To simplify this fairly common situation, any operation involving a Quantity
-and a string is handled by parsing the latter automatically.
+To simplify the fairly common situation that the reference quantity is a unit
+or another parsed value, any operation involving a Quantity and a string is
+handled by parsing the latter automatically.
 
     >>> v / 'm/s'
     21.0
