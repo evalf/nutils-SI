@@ -174,7 +174,7 @@ class Quantity(metaclass=Dimension):
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in args))
         elif name in ('mul', 'multiply', 'matmul'):
             Dim = type(args[0]) * type(args[1])
-        elif name in ('truediv', 'true_divide'):
+        elif name in ('truediv', 'true_divide', 'divide'):
             Dim = type(args[0]) / type(args[1])
         elif name in ('neg', 'negative', 'pos', 'positive', 'abs', 'absolute', 'sum', 'mean', 'broadcast_to', 'transpose', 'trace', 'take', 'ptp', 'getitem', 'amax', 'amin'):
             Dim = type(args[0])
