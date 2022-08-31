@@ -164,6 +164,9 @@ class Quantity(metaclass=Dimension):
         v = self / type(self)(format_spec[n:])
         return v.__format__(format_spec[:n]+'f') + format_spec[n:]
 
+    def __str__(self):
+        return str(self.__value) + type(self).__name__
+
     @staticmethod
     def _dispatch(op, *args, **kwargs):
         name = op.__name__

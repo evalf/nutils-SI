@@ -242,3 +242,7 @@ class Quantity(unittest.TestCase):
         v = SI.Velocity('2m/s')
         s = pickle.dumps(v)
         self.assertEqual(pickle.loads(s), v)
+
+    def test_string_representation(self):
+        F = SI.Force('2N')
+        self.assertEqual(str(F), '2.0[M*L/T2]')
