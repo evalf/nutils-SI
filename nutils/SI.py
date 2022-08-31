@@ -103,7 +103,10 @@ class Dimension(type):
         return cls(s)
 
     def __stringly_dumps__(cls, v):
-        raise NotImplementedError
+        try:
+            return v._parsed_from
+        except AttributeError:
+            raise NotImplementedError
 
     def __call__(cls, value):
         if cls is Quantity:
@@ -140,6 +143,7 @@ def parse(s):
         except (ValueError, AttributeError):
             raise ValueError(f'invalid (sub)expression {expr!r}') from None
         q = q * v if isnumer else q / v
+    q._parsed_from = s
     return q
 
 
