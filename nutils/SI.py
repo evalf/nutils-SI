@@ -103,7 +103,10 @@ class Dimension(type):
         return cls(s)
 
     def __stringly_dumps__(cls, v):
-        raise NotImplementedError
+        try:
+            return v._parsed_from
+        except AttributeError:
+            raise NotImplementedError
 
     def __call__(cls, value):
         if cls is Quantity:
@@ -140,6 +143,7 @@ def parse(s):
         except (ValueError, AttributeError):
             raise ValueError(f'invalid (sub)expression {expr!r}') from None
         q = q * v if isnumer else q / v
+    q._parsed_from = s
     return q
 
 
@@ -163,6 +167,9 @@ class Quantity(metaclass=Dimension):
         n = len(format_spec) - len(format_spec.lstrip('0123456789.,'))
         v = self / type(self)(format_spec[n:])
         return v.__format__(format_spec[:n]+'f') + format_spec[n:]
+
+    def __str__(self):
+        return str(self.__value) + type(self).__name__
 
     @staticmethod
     def _dispatch(op, *args, **kwargs):
