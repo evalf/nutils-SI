@@ -246,3 +246,8 @@ class Quantity(unittest.TestCase):
     def test_string_representation(self):
         F = SI.Force('2N')
         self.assertEqual(str(F), '2.0[M*L/T2]')
+
+    def test_type_error(self):
+        for F in SI.Force('2N'), numpy.array([1,2,3]) * SI.Force('N'):
+            with self.assertRaisesRegex(TypeError, r"unsupported operand type\(s\) for /: '\[M\*L/T2\]' and 'object'"):
+                F / object()

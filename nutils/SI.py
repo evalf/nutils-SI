@@ -208,7 +208,12 @@ class Quantity(metaclass=Dimension):
         else:
             return NotImplemented
         assert isinstance(Dim, Dimension)
-        return Dim.__wrap__(op(*(arg.__value if isinstance(arg, Quantity) else arg for arg in args), **kwargs))
+        try:
+            retval = op(*(arg.__value if isinstance(arg, Quantity) else arg for arg in args), **kwargs)
+        except TypeError:
+            return NotImplemented
+        else:
+            return Dim.__wrap__(retval)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         if method != '__call__':
