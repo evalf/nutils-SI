@@ -59,9 +59,6 @@ class Dimension(type):
               for base, power, isnumer in _split_factors(attr[1:-1]) if power})
         raise AttributeError(attr)
 
-    def __bool__(cls) -> bool:
-        return bool(cls.__powers)
-
     def __or__(cls, other):
         return typing.Union[cls, other]
 
