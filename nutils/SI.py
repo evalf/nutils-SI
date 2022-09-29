@@ -166,6 +166,9 @@ class Quantity(metaclass=Dimension):
     def __str__(self):
         return str(self.__value) + type(self).__name__
 
+    def __repr__(self):
+        return repr(self.__value) + type(self).__name__
+
     @staticmethod
     def _dispatch(op, *args, **kwargs):
         name = op.__name__
