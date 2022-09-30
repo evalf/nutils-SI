@@ -206,6 +206,14 @@ class Quantity(metaclass=Dimension):
             args = [q.__value for q in stack_args],
         elif name in ('shape', 'ndim', 'size', 'sign'):
             Dim = Dimension.from_powers({})
+        elif name in ('sin', 'cos', 'tan'):
+            if not isinstance(args[0], Angle):
+                raise TypeError(f'trigonometric functions require angle {Angle.__name__}, got {type(args[0]).__name__}')
+            Dim = Dimension.from_powers({})
+        elif name == 'arctan2':
+            if type(args[0]) != type(args[1]):
+                raise TypeError(f'arguments of arctan2 must have equal dimension, got {type(args[0]).__name__} and {type(args[1]).__name__}')
+            Dim = Angle
         else:
             return NotImplemented
         assert isinstance(Dim, Dimension)
@@ -319,6 +327,7 @@ ElectricCurrent = Dimension.create('I')
 Temperature = Dimension.create('θ')
 AmountOfSubstance = Dimension.create('N')
 LuminousFlux = LuminousIntensity = Dimension.create('J')
+Angle = Dimension.create('A')
 
 Area = Length**2
 Volume = Length**3
@@ -362,6 +371,7 @@ units.A = ElectricCurrent.reference_quantity
 units.K = Temperature.reference_quantity
 units.mol = AmountOfSubstance.reference_quantity
 units.cd = LuminousIntensity.reference_quantity
+units.rad = Angle.reference_quantity
 
 units.N = 'kg*m/s2' # newton
 units.Pa = 'N/m2' # pascal
@@ -392,3 +402,4 @@ units.L = 'dm3' # liter
 units.t = '1000kg' # ton
 units.Da = '1.66053904020yg' # dalton
 units.eV = '.1602176634aJ' # electronvolt
+units.deg = '0.017453292519943295rad' # degree

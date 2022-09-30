@@ -252,3 +252,18 @@ class Quantity(unittest.TestCase):
         for F in SI.Force('2N'), numpy.array([1,2,3]) * SI.Force('N'):
             with self.assertRaisesRegex(TypeError, r"unsupported operand type\(s\) for /: '\[M\*L/T2\]' and 'object'"):
                 F / object()
+
+    def test_angle(self):
+        φ = SI.Angle('30deg')
+        self.assertTrue(numpy.isclose(numpy.sin(φ), .5))
+        self.assertTrue(numpy.isclose(numpy.cos(φ), numpy.sqrt(3)/2))
+        self.assertTrue(numpy.isclose(numpy.tan(φ), 1/numpy.sqrt(3)))
+        with self.assertRaisesRegex(TypeError, r'trigonometric functions require angle \[A\], got \[L\]'):
+            numpy.sin(SI.parse('2m'))
+        a = SI.Length('1m')
+        b = SI.Length('-1m')
+        φ = numpy.arctan2(a, b)
+        self.assertIsInstance(φ, SI.Angle)
+        self.assertTrue(numpy.isclose(φ / 'deg', 135))
+        with self.assertRaisesRegex(TypeError, r'arguments of arctan2 must have equal dimension, got \[L\] and \[M\]'):
+            numpy.arctan2(SI.parse('2m'), SI.parse('1kg'))
