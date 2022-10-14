@@ -111,14 +111,11 @@ class Dimension(type):
         if not isinstance(value, str):
             raise ValueError(f'expected a str, got {type(value).__name__}')
         q = parse(value)
-        expect = float if not cls.__powers else cls
-        if type(q) != expect:
-            raise TypeError(f'expected {expect.__name__}, got {type(q).__name__}')
+        if not isinstance(q, cls):
+            raise TypeError(f'expected {cls.__name__}, got {type(q).__name__}')
         return q
 
     def __wrap__(cls, value):
-        if not cls.__powers:
-            return value
         return super().__call__(value)
 
     @property
@@ -138,6 +135,8 @@ def parse(s):
         except (ValueError, AttributeError):
             raise ValueError(f'invalid (sub)expression {expr!r}') from None
         q = q * v if isnumer else q / v
+    if not isinstance(q, Quantity):
+        q = Dimensionless.__wrap__(q)
     q._parsed_from = s
     return q
 
@@ -197,7 +196,7 @@ class Quantity(metaclass=Dimension):
         elif name in ('lt', 'le', 'eq', 'ne', 'gt', 'ge', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'isfinite', 'isinf', 'isnan'):
             if any(type(q) != type(args[0]) for q in args[1:]):
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in args))
-            Dim = Dimension.from_powers({})
+            Dim = Dimensionless
         elif name in ('stack', 'concatenate'):
             stack_args, = args
             Dim = type(stack_args[0])
@@ -205,11 +204,11 @@ class Quantity(metaclass=Dimension):
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in stack_args))
             args = [q.__value for q in stack_args],
         elif name in ('shape', 'ndim', 'size', 'sign'):
-            Dim = Dimension.from_powers({})
+            Dim = Dimensionless
         elif name in ('sin', 'cos', 'tan'):
             if not isinstance(args[0], Angle):
                 raise TypeError(f'trigonometric functions require angle {Angle.__name__}, got {type(args[0]).__name__}')
-            Dim = Dimension.from_powers({})
+            Dim = Dimensionless
         elif name == 'arctan2':
             if type(args[0]) != type(args[1]):
                 raise TypeError(f'arguments of arctan2 must have equal dimension, got {type(args[0]).__name__} and {type(args[1]).__name__}')
@@ -221,6 +220,8 @@ class Quantity(metaclass=Dimension):
             retval = op(*(arg.__value if isinstance(arg, Quantity) else arg for arg in args), **kwargs)
         except TypeError:
             return NotImplemented
+        if Dim == Dimensionless:
+            return retval
         if name == 'divmod':
             return retval[0], Dim.__wrap__(retval[1])
         return Dim.__wrap__(retval)
@@ -319,6 +320,8 @@ def _split_factors(s):
 
 
 ## SI DIMENSIONS
+
+Dimensionless = Dimension.from_powers({})
 
 Time = Dimension.create('T')
 Length = Dimension.create('L')
