@@ -46,15 +46,15 @@ class Quantity(unittest.TestCase):
 
     def test_fromstring(self):
         F = SI.parse('5kN')
-        self.assertEqual(type(F), SI.Force)
+        self.assertIsInstance(F, SI.Force)
         self.assertEqual(F / 'N', 5000)
         v = SI.parse('-864km/24h')
-        self.assertEqual(type(v), SI.Velocity)
+        self.assertIsInstance(v, SI.Velocity)
         self.assertEqual(v / 'm/s', -10)
 
     def test_fromvalue(self):
         F = SI.Force('10N')
-        self.assertEqual(type(F), SI.Force)
+        self.assertIsInstance(F, SI.Force)
         self.assertEqual(F / SI.Force('2N'), 5)
 
     def test_array(self):
