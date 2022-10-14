@@ -108,8 +108,6 @@ class Dimension(type):
     def __call__(cls, value):
         if cls is Quantity:
             raise Exception('Quantity base class cannot be instantiated')
-        if isinstance(value, cls):
-            return value
         if not isinstance(value, str):
             raise ValueError(f'expected a str, got {type(value).__name__}')
         q = parse(value)
