@@ -406,3 +406,4 @@ units.t = '1000kg' # ton
 units.Da = '1.66053904020yg' # dalton
 units.eV = '.1602176634aJ' # electronvolt
 units.deg = '0.017453292519943295rad' # degree
+units['in'] = 25.4 * units.mm # inch
