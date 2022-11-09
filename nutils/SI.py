@@ -52,6 +52,9 @@ class Dimension(type):
             mcls.__cache[name] = cls
         return cls
 
+    def __hash__(cls):
+        return hash(tuple(sorted(cls.__powers.items())))
+
     def __getattr__(cls, attr):
         if attr.startswith('[') and attr.endswith(']'):
             # this, together with __qualname__, is what makes pickle work
@@ -167,6 +170,9 @@ class Quantity(metaclass=Dimension):
 
     def __repr__(self):
         return repr(self.__value) + type(self).__name__
+
+    def __hash__(self):
+        return hash((type(self), self.__value))
 
     @staticmethod
     def _dispatch(op, *args, **kwargs):
