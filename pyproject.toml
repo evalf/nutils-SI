@@ -14,4 +14,4 @@ dynamic = ["version", "description"]
 Home = "https://github.com/evalf/nutils-SI/"
 
 [tool.flit.module]
-name = "nutils.SI"
+name = "nutils_SI"

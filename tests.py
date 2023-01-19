@@ -1,4 +1,4 @@
-from nutils import SI
+import nutils_SI as SI
 
 import numpy
 import pickle
