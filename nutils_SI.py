@@ -199,6 +199,7 @@ class Quantity(metaclass=Dimension):
                 raise TypeError(f'cannot assign {type(args[2]).__name__} to {Dim.__name__}')
         elif name in ('pow', 'power'):
             Dim = type(args[0])**args[1]
+            args = args[0], float(args[1])
         elif name in ('lt', 'le', 'eq', 'ne', 'gt', 'ge', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'isfinite', 'isinf', 'isnan'):
             if any(type(q) != type(args[0]) for q in args[1:]):
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in args))
