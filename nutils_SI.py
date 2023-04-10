@@ -149,6 +149,9 @@ class Quantity(metaclass=Dimension):
     def __init__(self, value):
         self.__value = value
 
+    def __getnewargs__(self):
+        return self.__value,
+
     def __bool__(self):
         return bool(self.__value)
 
