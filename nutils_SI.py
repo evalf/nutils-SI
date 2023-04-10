@@ -52,15 +52,15 @@ class Dimension(type):
             mcls.__cache[name] = cls
         return cls
 
+    def __hash__(cls):
+        return hash(tuple(sorted(cls.__powers.items())))
+
     def __getattr__(cls, attr):
         if attr.startswith('[') and attr.endswith(']'):
             # this, together with __qualname__, is what makes pickle work
             return Dimension.from_powers({base: fractions.Fraction(power if isnumer else -power)
               for base, power, isnumer in _split_factors(attr[1:-1]) if power})
         raise AttributeError(attr)
-
-    def __bool__(cls) -> bool:
-        return bool(cls.__powers)
 
     def __or__(cls, other):
         return typing.Union[cls, other]
@@ -111,19 +111,14 @@ class Dimension(type):
     def __call__(cls, value):
         if cls is Quantity:
             raise Exception('Quantity base class cannot be instantiated')
-        if isinstance(value, cls):
-            return value
         if not isinstance(value, str):
             raise ValueError(f'expected a str, got {type(value).__name__}')
         q = parse(value)
-        expect = float if not cls.__powers else cls
-        if type(q) != expect:
-            raise TypeError(f'expected {expect.__name__}, got {type(q).__name__}')
+        if not isinstance(q, cls):
+            raise TypeError(f'expected {cls.__name__}, got {type(q).__name__}')
         return q
 
     def __wrap__(cls, value):
-        if not cls.__powers:
-            return value
         return super().__call__(value)
 
     @property
@@ -143,6 +138,8 @@ def parse(s):
         except (ValueError, AttributeError):
             raise ValueError(f'invalid (sub)expression {expr!r}') from None
         q = q * v if isnumer else q / v
+    if not isinstance(q, Quantity):
+        q = Dimensionless.__wrap__(q)
     q._parsed_from = s
     return q
 
@@ -151,6 +148,9 @@ class Quantity(metaclass=Dimension):
 
     def __init__(self, value):
         self.__value = value
+
+    def __getnewargs__(self):
+        return self.__value,
 
     def __bool__(self):
         return bool(self.__value)
@@ -171,44 +171,70 @@ class Quantity(metaclass=Dimension):
     def __str__(self):
         return str(self.__value) + type(self).__name__
 
+    def __repr__(self):
+        return repr(self.__value) + type(self).__name__
+
+    def __hash__(self):
+        return hash((type(self), self.__value))
+
     @staticmethod
     def _dispatch(op, *args, **kwargs):
         name = op.__name__
-        args = [parse(arg) if isinstance(arg, str) else arg for arg in args]
-        if name in ('add', 'sub', 'subtract', 'hypot'):
+        if name in ('add', 'sub', 'subtract', 'hypot', 'minimum', 'maximum', 'remainder', 'divmod'):
             Dim = type(args[0])
             if type(args[1]) != Dim:
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in args))
-        elif name in ('mul', 'multiply', 'matmul'):
+        elif name == 'reciprocal':
+            Dim = type(args[0])**-1
+        elif name in ('mul', 'multiply', 'matmul', 'dot'):
             Dim = type(args[0]) * type(args[1])
         elif name in ('truediv', 'true_divide', 'divide'):
             Dim = type(args[0]) / type(args[1])
-        elif name in ('neg', 'negative', 'pos', 'positive', 'abs', 'absolute', 'sum', 'mean', 'broadcast_to', 'transpose', 'trace', 'take', 'ptp', 'getitem', 'amax', 'amin'):
+        elif name in ('neg', 'negative', 'pos', 'positive', 'abs', 'absolute', 'sum', 'cumsum', 'mean', 'broadcast_to', 'transpose', 'trace', 'take', 'compress', 'ptp', 'getitem', 'amax', 'amin', 'diff', 'reshape', 'ravel', 'repeat', 'swapaxes'):
             Dim = type(args[0])
         elif name == 'sqrt':
             Dim = type(args[0])**fractions.Fraction(1,2)
+        elif name == 'square':
+            Dim = type(args[0])**2
         elif name == 'setitem':
             Dim = type(args[0])
             if type(args[2]) != Dim:
                 raise TypeError(f'cannot assign {type(args[2]).__name__} to {Dim.__name__}')
         elif name in ('pow', 'power'):
             Dim = type(args[0])**args[1]
-        elif name in ('lt', 'le', 'eq', 'ne', 'gt', 'ge', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'isfinite', 'isnan'):
+            args = args[0], float(args[1])
+        elif name in ('lt', 'le', 'eq', 'ne', 'gt', 'ge', 'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'isfinite', 'isinf', 'isnan'):
             if any(type(q) != type(args[0]) for q in args[1:]):
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in args))
-            Dim = Dimension.from_powers({})
+            Dim = Dimensionless
         elif name in ('stack', 'concatenate'):
             stack_args, = args
             Dim = type(stack_args[0])
             if any(type(q) != Dim for q in stack_args[1:]):
                 raise TypeError(f'incompatible arguments for {name}: ' + ', '.join(type(arg).__name__ for arg in stack_args))
             args = [q.__value for q in stack_args],
-        elif name in ('shape', 'ndim', 'size'):
-            Dim = Dimension.from_powers({})
+        elif name in ('shape', 'ndim', 'size', 'sign'):
+            Dim = Dimensionless
+        elif name in ('sin', 'cos', 'tan'):
+            if not isinstance(args[0], Angle):
+                raise TypeError(f'trigonometric functions require angle {Angle.__name__}, got {type(args[0]).__name__}')
+            Dim = Dimensionless
+        elif name == 'arctan2':
+            if type(args[0]) != type(args[1]):
+                raise TypeError(f'arguments of arctan2 must have equal dimension, got {type(args[0]).__name__} and {type(args[1]).__name__}')
+            Dim = Angle
         else:
             return NotImplemented
         assert isinstance(Dim, Dimension)
-        return Dim.__wrap__(op(*(arg.__value if isinstance(arg, Quantity) else arg for arg in args), **kwargs))
+        try:
+            retval = op(*(arg.__value if isinstance(arg, Quantity) else arg for arg in args), **kwargs)
+        except TypeError:
+            return NotImplemented
+        if Dim == Dimensionless:
+            return retval
+        if name == 'divmod':
+            return retval[0], Dim.__wrap__(retval[1])
+        return Dim.__wrap__(retval)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         if method != '__call__':
@@ -249,9 +275,14 @@ class Quantity(metaclass=Dimension):
     __sub__, __rsub__ = _binary_r('sub')
     __mul__, __rmul__ = _binary_r('mul')
     __matmul__, __rmatmul__ = _binary_r('matmul')
-    __truediv__, __rtruediv__ = _binary_r('truediv')
+    __truediv, __rtruediv__ = _binary_r('truediv')
     __mod__, __rmod__ = _binary_r('mod')
     __pow__, __rpow__ = _binary_r('pow')
+
+    def __truediv__(self, other):
+        if type(other) is str:
+            return self.__value / self.__class__(other).__value
+        return self.__truediv(other)
 
     def _attr(name):
         return property(lambda self: getattr(self.__value, name))
@@ -300,6 +331,8 @@ def _split_factors(s):
 
 ## SI DIMENSIONS
 
+Dimensionless = Dimension.from_powers({})
+
 Time = Dimension.create('T')
 Length = Dimension.create('L')
 Mass = Dimension.create('M')
@@ -307,6 +340,7 @@ ElectricCurrent = Dimension.create('I')
 Temperature = Dimension.create('θ')
 AmountOfSubstance = Dimension.create('N')
 LuminousFlux = LuminousIntensity = Dimension.create('J')
+Angle = Dimension.create('A')
 
 Area = Length**2
 Volume = Length**3
@@ -350,6 +384,7 @@ units.A = ElectricCurrent.reference_quantity
 units.K = Temperature.reference_quantity
 units.mol = AmountOfSubstance.reference_quantity
 units.cd = LuminousIntensity.reference_quantity
+units.rad = Angle.reference_quantity
 
 units.N = 'kg*m/s2' # newton
 units.Pa = 'N/m2' # pascal
@@ -380,3 +415,5 @@ units.L = 'dm3' # liter
 units.t = '1000kg' # ton
 units.Da = '1.66053904020yg' # dalton
 units.eV = '.1602176634aJ' # electronvolt
+units.deg = '0.017453292519943295rad' # degree
+units['in'] = 25.4 * units.mm # inch

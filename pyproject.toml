@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "nutils.SI"
+name = "nutils-SI"
 authors = [{name = "Evalf", email = "info@evalf.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -12,3 +12,6 @@ dynamic = ["version", "description"]
 
 [project.urls]
 Home = "https://github.com/evalf/nutils-SI/"
+
+[tool.flit.module]
+name = "nutils_SI"

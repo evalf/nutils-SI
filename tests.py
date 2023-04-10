@@ -1,4 +1,4 @@
-from nutils import SI
+import nutils_SI as SI
 
 import numpy
 import pickle
@@ -46,15 +46,15 @@ class Quantity(unittest.TestCase):
 
     def test_fromstring(self):
         F = SI.parse('5kN')
-        self.assertEqual(type(F), SI.Force)
+        self.assertIsInstance(F, SI.Force)
         self.assertEqual(F / 'N', 5000)
         v = SI.parse('-864km/24h')
-        self.assertEqual(type(v), SI.Velocity)
+        self.assertIsInstance(v, SI.Velocity)
         self.assertEqual(v / 'm/s', -10)
 
     def test_fromvalue(self):
         F = SI.Force('10N')
-        self.assertEqual(type(F), SI.Force)
+        self.assertIsInstance(F, SI.Force)
         self.assertEqual(F / SI.Force('2N'), 5)
 
     def test_array(self):
@@ -246,3 +246,24 @@ class Quantity(unittest.TestCase):
     def test_string_representation(self):
         F = SI.Force('2N')
         self.assertEqual(str(F), '2.0[M*L/T2]')
+        self.assertEqual(repr(F), '2.0[M*L/T2]')
+
+    def test_type_error(self):
+        for F in SI.Force('2N'), numpy.array([1,2,3]) * SI.Force('N'):
+            with self.assertRaisesRegex(TypeError, r"unsupported operand type\(s\) for /: '\[M\*L/T2\]' and 'object'"):
+                F / object()
+
+    def test_angle(self):
+        φ = SI.Angle('30deg')
+        self.assertTrue(numpy.isclose(numpy.sin(φ), .5))
+        self.assertTrue(numpy.isclose(numpy.cos(φ), numpy.sqrt(3)/2))
+        self.assertTrue(numpy.isclose(numpy.tan(φ), 1/numpy.sqrt(3)))
+        with self.assertRaisesRegex(TypeError, r'trigonometric functions require angle \[A\], got \[L\]'):
+            numpy.sin(SI.parse('2m'))
+        a = SI.Length('1m')
+        b = SI.Length('-1m')
+        φ = numpy.arctan2(a, b)
+        self.assertIsInstance(φ, SI.Angle)
+        self.assertTrue(numpy.isclose(φ / 'deg', 135))
+        with self.assertRaisesRegex(TypeError, r'arguments of arctan2 must have equal dimension, got \[L\] and \[M\]'):
+            numpy.arctan2(SI.parse('2m'), SI.parse('1kg'))
