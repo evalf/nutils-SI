@@ -183,7 +183,7 @@ class Quantity(metaclass=Dimension):
             Dim = type(args[0]) * type(args[1])
         elif name in ('truediv', 'true_divide', 'divide'):
             Dim = type(args[0]) / type(args[1])
-        elif name in ('neg', 'negative', 'pos', 'positive', 'abs', 'absolute', 'sum', 'mean', 'broadcast_to', 'transpose', 'trace', 'take', 'ptp', 'getitem', 'amax', 'amin'):
+        elif name in ('neg', 'negative', 'pos', 'positive', 'abs', 'absolute', 'sum', 'mean', 'broadcast_to', 'transpose', 'trace', 'take', 'ptp', 'getitem', 'amax', 'amin', 'max', 'min'):
             Dim = type(args[0])
         elif name == 'sqrt':
             Dim = type(args[0])**fractions.Fraction(1,2)
