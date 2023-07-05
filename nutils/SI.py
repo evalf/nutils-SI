@@ -118,10 +118,6 @@ class Dimension(type):
             return value
         return super().__call__(value)
 
-    @property
-    def reference_quantity(cls):
-        return cls.__wrap__(1.)
-
 
 def parse(s):
     if not isinstance(s, str):
@@ -387,13 +383,13 @@ CatalyticActivity = AmountOfSubstance / Time
 
 units = Units()
 
-units.m = Length.reference_quantity
-units.s = Time.reference_quantity
-units.g = Mass.reference_quantity * 1e-3
-units.A = ElectricCurrent.reference_quantity
-units.K = Temperature.reference_quantity
-units.mol = AmountOfSubstance.reference_quantity
-units.cd = LuminousIntensity.reference_quantity
+units.m = Length.__wrap__(1.)
+units.s = Time.__wrap__(1.)
+units.g = Mass.__wrap__(1e-3)
+units.A = ElectricCurrent.__wrap__(1.)
+units.K = Temperature.__wrap__(1.)
+units.mol = AmountOfSubstance.__wrap__(1.)
+units.cd = LuminousIntensity.__wrap__(1.)
 
 units.N = 'kg*m/s2' # newton
 units.Pa = 'N/m2' # pascal
