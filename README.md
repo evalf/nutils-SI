@@ -109,7 +109,7 @@ At this point, the dimension is not very useful yet as it lacks units. To
 rectify this we define the radian by its abbreviation 'rad' in terms of the
 provided reference quantity, and assign it to the global table of units:
 
-    >>> SI.units.rad = Angle.reference_quantity
+    >>> SI.units.rad = Angle.__wrap__(1.)
 
 Additional units can be defined by relating them to pre-existing ones:
 
